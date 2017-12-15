@@ -26,27 +26,27 @@
 
     <dependencies>
 
-        <!--全局排除log4j以及slf4j-log4j12-->
-        <dependency>
-            <artifactId>log4j</artifactId>
-            <groupId>log4j</groupId>
-            <exclusions>
-                <exclusion>
-                    <groupId>*</groupId>
-                    <artifactId>*</artifactId>
-                </exclusion>
-            </exclusions>
-        </dependency>
-        <dependency>
-            <artifactId>slf4j-log4j12</artifactId>
-            <groupId>org.slf4j</groupId>
-            <exclusions>
-                <exclusion>
-                    <groupId>*</groupId>
-                    <artifactId>*</artifactId>
-                </exclusion>
-            </exclusions>
-        </dependency>
+        <!--&lt;!&ndash;全局排除log4j以及slf4j-log4j12&ndash;&gt;-->
+        <!--<dependency>-->
+            <!--<artifactId>log4j</artifactId>-->
+            <!--<groupId>log4j</groupId>-->
+            <!--<exclusions>-->
+                <!--<exclusion>-->
+                    <!--<groupId>*</groupId>-->
+                    <!--<artifactId>*</artifactId>-->
+                <!--</exclusion>-->
+            <!--</exclusions>-->
+        <!--</dependency>-->
+        <!--<dependency>-->
+            <!--<artifactId>slf4j-log4j12</artifactId>-->
+            <!--<groupId>org.slf4j</groupId>-->
+            <!--<exclusions>-->
+                <!--<exclusion>-->
+                    <!--<groupId>*</groupId>-->
+                    <!--<artifactId>*</artifactId>-->
+                <!--</exclusion>-->
+            <!--</exclusions>-->
+        <!--</dependency>-->
 
         <!--LogBack-->
         <dependency>

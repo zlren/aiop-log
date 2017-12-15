@@ -12,15 +12,11 @@ import java.util.Properties;
  * @author zlren
  * @date 2017-12-09
  */
-public class MyProducer extends Thread {
-
-    private String topic;
+public class MessageProducer extends Thread {
 
     private Producer<Integer, String> producer;
 
-    public MyProducer(String topic) {
-
-        this.topic = topic;
+    public MessageProducer() {
 
         Properties props = new Properties();
 
@@ -48,21 +44,11 @@ public class MyProducer extends Thread {
         producer = new KafkaProducer<>(props);
     }
 
-    @Override
-    public void run() {
-        int msgNumber = 1;
-
-        while (true) {
-
-            String msg = "msg_" + msgNumber;
-            producer.send(new ProducerRecord<>(topic, msgNumber++, msg));
-            System.out.println("sent: " + msg);
-
-            try {
-                Thread.sleep(2000);
-            } catch (InterruptedException e) {
-                e.printStackTrace();
-            }
-        }
+    /**
+     * 发送消息
+     */
+    public void send(String topic, Integer msgNumber, String msgContent) {
+        producer.send(new ProducerRecord<>(topic, msgNumber, msgContent));
+        System.out.println("producer sent: msgNumber = " + msgNumber + " msgContent = " + msgContent);
     }
 }
