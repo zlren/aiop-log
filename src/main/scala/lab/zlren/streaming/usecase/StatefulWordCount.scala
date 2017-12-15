@@ -29,8 +29,8 @@ object StatefulWordCount {
 	/**
 	  * 把当前的数据去更新已有的或者是老的数据
 	  *
-	  * @param curValues
-	  * @param preValues
+	  * @param curValues 当前key相同的一组数据
+	  * @param preValues 此key的之前状态
 	  * @return
 	  */
 	def updateFunction(curValues: Seq[Int], preValues: Option[Int]): Option[Int] = {
