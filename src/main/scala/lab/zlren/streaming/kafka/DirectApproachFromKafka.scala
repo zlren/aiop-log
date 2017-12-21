@@ -26,7 +26,7 @@ object DirectApproachFromKafka {
 			"enable.auto.commit" -> (false: java.lang.Boolean)
 		)
 
-		val topics = Array("hello_topic")
+		val topics = Array("aiop-log")
 
 		val stream = KafkaUtils.createDirectStream[String, String](
 			ssc,
