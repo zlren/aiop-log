@@ -1,5 +1,8 @@
 package lab.zlren.streaming.project
 
+import lab.zlren.streaming.project.dao.{CourseClickCountDAO, CourseSearchClickCountDAO}
+import lab.zlren.streaming.project.entity.{ClickLog, CourseClickCount, CourseSearchClickCount}
+import lab.zlren.streaming.project.util.DateUtil
 import org.apache.kafka.common.serialization.StringDeserializer
 import org.apache.spark.SparkConf
 import org.apache.spark.streaming.kafka010.ConsumerStrategies.Subscribe
@@ -7,6 +10,8 @@ import org.apache.spark.streaming.kafka010.KafkaUtils
 import org.apache.spark.streaming.kafka010.LocationStrategies.PreferConsistent
 import org.apache.spark.streaming.{Seconds, StreamingContext}
 import org.slf4j.{Logger, LoggerFactory}
+
+import scala.collection.mutable.ListBuffer
 
 object ProjectApp {
 
@@ -17,7 +22,7 @@ object ProjectApp {
 		val ssc = new StreamingContext(sparkConf, Seconds(10))
 
 		val kafkaParams = Map[String, Object](
-			"bootstrap.servers" -> "data:9092",
+			"bootstrap.servers" -> "10.109.246.66:9092",
 			"key.deserializer" -> classOf[StringDeserializer],
 			"value.deserializer" -> classOf[StringDeserializer],
 			"group.id" -> "use_a_separate_group_id_for_each_stream",
@@ -37,7 +42,6 @@ object ProjectApp {
 		val logs = stream.map(_.value())
 
 		val cleanedData = logs.map(log => {
-
 			// 143.63.124.156	2017-12-21 22:23:01	"GET class/131.html HTTP/1.1"	404	http://www.sogou.com/web?query=spark-streaming实战
 
 			val infos = log.split("\t")
@@ -50,11 +54,35 @@ object ProjectApp {
 				courseId = courseHtml.split("\\.")(0).toInt
 			}
 
-			ClickLog(infos(0), DateUtils.getTime(infos(1)), courseId, infos(3).toInt, infos(4))
-		}).filter(clickLog => clickLog.courseId != 0)
+			ClickLog(infos(0), DateUtil.getTime(infos(1)), courseId, infos(3).toInt, infos(4))
+		}).filter(clickLog => clickLog.courseId != 0) // 过滤掉课程号为0的才是实战课程
 
-		// 打印清洗后的数据
-		cleanedData.print()
+		// 日访问量
+		cleanedData.map(x => {
+			// hbase的rowkey设计
+			(x.time.substring(0, 8) + "_" + x.courseId, 1)
+		}).reduceByKey(_ + _).foreachRDD(rdd => {
+			rdd.foreachPartition(partitionRecords => {
+				val list = new ListBuffer[CourseClickCount]
+				partitionRecords.foreach(pair => {
+					list.append(CourseClickCount(pair._1, pair._2))
+				})
+				CourseClickCountDAO.save(list)
+			})
+		})
+
+		// 搜索引擎日引流量
+		cleanedData.filter(clickLog => clickLog.referer != "-").map(clickLog => {
+			(clickLog.time.substring(0, 8) + "_" + clickLog.referer.split("\\.")(1) + "_" + clickLog.courseId, 1)
+		}).reduceByKey(_ + _).foreachRDD(rdd => {
+			rdd.foreachPartition(partitionRecords => {
+				val list = new ListBuffer[CourseSearchClickCount]
+				partitionRecords.foreach(pair => {
+					list.append(CourseSearchClickCount(pair._1, pair._2))
+				})
+				CourseSearchClickCountDAO.save(list)
+			})
+		})
 
 		ssc.start()
 		ssc.awaitTermination()

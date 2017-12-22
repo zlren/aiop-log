@@ -1,4 +1,4 @@
-package lab.zlren.streaming.project
+package lab.zlren.streaming.project.entity
 
 /**
   *
