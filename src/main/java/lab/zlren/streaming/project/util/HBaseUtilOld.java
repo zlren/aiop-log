@@ -15,17 +15,17 @@ import java.io.IOException;
  * @author zlren
  * @date 2017-12-22
  */
-public class HBaseUtil {
+public class HBaseUtilOld {
 
     private HBaseAdmin admin = null;
     private Configuration conf = null;
 
-    private HBaseUtil() {
+    private HBaseUtilOld() {
 
         // 这些参数的配置在HBASE_HOME/conf/hbase-site.xml文件中
         conf = new Configuration();
-        conf.set("hbase.zookeeper.quorum", "10.109.246.66:2181");
-        conf.set("hbase.rootdir", "hdfs://10.109.246.66:9000/hbase");
+        conf.set("hbase.zookeeper.quorum", "10.109.246.67:2181");
+        conf.set("hbase.rootdir", "hdfs://10.109.246.67:9000/hbase");
 
         try {
             admin = new HBaseAdmin(conf);
@@ -34,11 +34,11 @@ public class HBaseUtil {
         }
     }
 
-    private static HBaseUtil instance = null;
+    private static HBaseUtilOld instance = null;
 
-    public static synchronized HBaseUtil getInstance() {
+    public static synchronized HBaseUtilOld getInstance() {
         if (null == instance) {
-            instance = new HBaseUtil();
+            instance = new HBaseUtilOld();
         }
         return instance;
     }
@@ -82,6 +82,6 @@ public class HBaseUtil {
 
 
     public static void main(String[] args) {
-        HBaseUtil.getInstance().put("course_clickcount", "20171111_131", "info", "count", String.valueOf(99));
+        HBaseUtilOld.getInstance().put("aiop_log", "20171111_131", "info", "level", String.valueOf(99));
     }
 }

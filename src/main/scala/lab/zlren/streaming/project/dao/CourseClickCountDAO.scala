@@ -1,7 +1,7 @@
 package lab.zlren.streaming.project.dao
 
 import lab.zlren.streaming.project.entity.CourseClickCount
-import lab.zlren.streaming.project.util.HBaseUtil
+import lab.zlren.streaming.project.util.HBaseUtilOld
 import org.apache.hadoop.hbase.client.Get
 import org.apache.hadoop.hbase.util.Bytes
 
@@ -23,7 +23,7 @@ object CourseClickCountDAO {
 	  */
 	def save(list: ListBuffer[CourseClickCount]): Unit = {
 
-		val table = HBaseUtil.getInstance().getTable(tableName)
+		val table = HBaseUtilOld.getInstance().getTable(tableName)
 		for (elem <- list) {
 			// 增量更新
 			table.incrementColumnValue(
@@ -42,7 +42,7 @@ object CourseClickCountDAO {
 	  */
 	def count(day_course: String): Long = {
 
-		val table = HBaseUtil.getInstance().getTable(tableName)
+		val table = HBaseUtilOld.getInstance().getTable(tableName)
 		val get = new Get(day_course.getBytes())
 		val value = table.get(get).getValue(columnFamily.getBytes(), qualifer.getBytes())
 
