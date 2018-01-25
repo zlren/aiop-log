@@ -2,6 +2,7 @@ package lab.zlren.streaming.aiop.log
 
 import lab.zlren.streaming.aiop.log.dao.PlatformLogDAO
 import lab.zlren.streaming.aiop.log.entity.PlatformLog
+import lab.zlren.streaming.aiop.log.util.RedisUtil
 import org.apache.kafka.common.serialization.StringDeserializer
 import org.apache.spark.SparkConf
 import org.apache.spark.streaming.kafka010.ConsumerStrategies.Subscribe
@@ -41,11 +42,14 @@ object PlatformLogApp {
 		// _.key()是null，_.value()对我们是有用的，logs是这一批数据
 		val logs = stream.map(_.value())
 
+		val redisUtil = new RedisUtil()
+
 		try {
 			val filteredLog = logs.filter(log => {
 				if (log == null || log.length <= 0) {
 					false
-				} else if (log.contains("Environment") || log.contains("ClientCnxn") || log.contains("ZooKeeper") || log.contains("LogAspect")) {
+				} else if (log.contains("Environment") || log.contains("ClientCnxn") || log.contains("ZooKeeper") || log
+				  .contains("LogAspect") || log.contains("CACHE_SAVE")) {
 					false
 				} else if (!(log.startsWith("INFO") || log.startsWith("ERROR"))) {
 					false
@@ -62,27 +66,19 @@ object PlatformLogApp {
 				val level = values(0)
 				val time = values(1) + " " + values(2)
 				val file = values(3).substring(1, values(3).length - 1)
+				val domain = values(5).split("=")(1)
 				val appId = values(6).split("=")(1)
 
-				if (values(5).contains("NLP_REST")) {
+				if (domain.equals("NLP_REST")) {
 
-					val domainNlpAction = if (values(7).startsWith("action")) {
-						values(7).split("=")(1)
-					} else {
-						values(7)
-					}
-
-					assert(values(8).startsWith("ability"))
-					val domainNlpAbility = values(8).substring(0, values(8).length - 1).split("=")(1)
-
+					val domainNlpAction = values(7).split("=")(1)
+					val domainNlpAbility = values(8).split("=")(1)
 					val domainNlpResult = values(9).split("=")(1)
-
-					val domainNlpResultReason = if (domainNlpResult.equals("FAILED")) {
+					val domainNlpResultReason = if (domainNlpAction.equals("INVOKE") && domainNlpResult.equals("FAILED")) {
 						values(10).split("=")(1)
 					} else {
 						""
 					}
-
 
 					PlatformLog(
 						level,
@@ -98,9 +94,37 @@ object PlatformLogApp {
 						"",
 						"")
 
+				} else if (domain.equals("OAUTH")) {
 
-				} else if (values(5).contains("AUTH")) {
-					PlatformLog("", "", "", "", "", "", "", "", "", "", "", "")
+					val domainAuthAction = values(7).split("=")(1)
+
+					val domainAuthType = if (values(8).contains("access_token")) {
+						"access_token"
+					} else if (values(8).contains("permission")) {
+						"permission"
+					} else ""
+
+					val domainAuthPayload = if (domainAuthType.equals("access_token")) {
+						""
+					} else if (domainAuthType.equals("permission")) {
+						values(8).split("=")(1)
+					} else ""
+
+					val domainAuthResult = values(9).split("=")(1)
+
+					PlatformLog(
+						level,
+						time,
+						file,
+						appId,
+						"",
+						"",
+						"",
+						"",
+						domainAuthAction,
+						domainAuthType,
+						domainAuthPayload,
+						domainAuthResult)
 
 				} else {
 					PlatformLog("", "", "", "", "", "", "", "", "", "", "", "")
@@ -112,6 +136,9 @@ object PlatformLogApp {
 					partition.filter(pair => pair.level.length > 0).foreach(pair => {
 						logger.info("被append的数据：" + pair)
 						list.append(pair)
+
+						// redis统计
+						redisUtil.processTotal(pair)
 					})
 					PlatformLogDAO.save(list)
 				})

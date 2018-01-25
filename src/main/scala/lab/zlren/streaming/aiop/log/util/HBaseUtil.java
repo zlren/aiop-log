@@ -19,7 +19,8 @@ import java.util.List;
  */
 public class HBaseUtil {
 
-    public Connection connection = null;
+    private static Connection connection = null;
+    private static HBaseUtil instance = null;
 
     private HBaseUtil() {
 
@@ -34,7 +35,6 @@ public class HBaseUtil {
         }
     }
 
-    private static HBaseUtil instance = null;
 
     public static synchronized HBaseUtil getInstance() {
         if (null == instance) {
@@ -93,8 +93,11 @@ public class HBaseUtil {
         Put put = new Put(Bytes.toBytes(rowKey));
         dataList.forEach(data -> {
             if (data.value().length() > 0) {
-                put.addColumn(Bytes.toBytes(data.columnFamily()), Bytes.toBytes(data.column()), Bytes.toBytes
-                        (data.value()));
+                put.addColumn(
+                        Bytes.toBytes(data.columnFamily()),
+                        Bytes.toBytes(data.column()),
+                        Bytes.toBytes(data.value())
+                );
             }
         });
 
@@ -103,10 +106,5 @@ public class HBaseUtil {
         } catch (IOException e) {
             e.printStackTrace();
         }
-    }
-
-
-    public static void main(String[] args) throws IOException {
-        HBaseUtil.getInstance().put("aiop_log", "xxx", "info", "level", "asdfa");
     }
 }
